@@ -1,3 +1,5 @@
+import { applyPalette } from './palette.js';
+
 const clamp = (x, min, max) => Math.min(max, Math.max(min, x));
 const luma = (r, g, b) => (54 * r + 183 * g + 19 * b) / 256;
 
@@ -274,11 +276,17 @@ export function convert({ pixels, gw, gh, samples, method, ...settings }) {
   return result;
 }
 
+export function convertFrame(settings) {
+  const result = convert(settings);
+  const colors = settings.palette ? applyPalette(result, settings.palette) : null;
+  return { result, colors };
+}
+
 export function connectEngine(scope) {
   scope.onmessage = ({ data }) => {
     try {
-      const result = convert(data);
-      scope.postMessage({ id: data.id, result }, [result.buffer]);
+      const { result, colors } = convertFrame(data);
+      scope.postMessage({ id: data.id, result, colors }, [result.buffer]);
     } catch (error) {
       scope.postMessage({ id: data.id, error: error.message });
     }

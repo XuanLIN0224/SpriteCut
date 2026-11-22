@@ -94,6 +94,38 @@
       </div>
       <div class="field" id="contrastSettings"><label for="sensitivity" class="slider-label"><span data-i18n="sensitivity">Edge sensitivity</span> <output id="sensitivityValue" for="sensitivity"></output></label><input class="range" id="sensitivity" type="range" min="0" max="100" value="46"></div>
     </section>
+    <section class="controls" aria-labelledby="colors-title">
+      <h3 id="colors-title" data-i18n="colorsTitle">Colors</h3>
+      <label class="field"><span data-i18n="paletteMode">Output palette</span>
+        <select id="paletteMode">
+          <option value="source" data-i18n="paletteSource">Keep sampled colors</option>
+          <option value="limit" data-i18n="paletteLimitMode">Limit color count</option>
+          <option value="custom" data-i18n="paletteCustom">Custom palette</option>
+        </select>
+      </label>
+      <label class="field" id="paletteLimitSettings" hidden><span data-i18n="paletteLimit">Maximum colors</span>
+        <input id="paletteLimit" type="number" min="1" max="64" step="1" value="16" required inputmode="numeric">
+      </label>
+      <label class="field" id="paletteTextSettings" hidden><span data-i18n="paletteText">Allowed hex colors</span>
+        <textarea id="paletteText" rows="2" maxlength="1024" spellcheck="false" autocapitalize="off" aria-describedby="paletteTextHint"></textarea>
+        <span id="paletteTextHint" class="hint" data-i18n="paletteTextHint">Enter 1–64 colors separated by spaces, commas, or line breaks.</span>
+      </label>
+      <p id="paletteHint" class="hint" data-i18n="paletteHint" hidden>Solid color steps. PNG export keeps the exact colors. Transparent pixels do not count.</p>
+      <div id="paletteResult" hidden>
+        <p id="paletteCount" class="hint"></p>
+        <ul id="swatches" class="swatches" aria-label="Output colors" data-i18n-label="swatches"></ul>
+        <button type="button" id="editPalette" class="text-button" data-i18n="editPalette">Use as custom palette</button>
+      </div>
+      <label class="field"><span data-i18n="gradients">SVG gradients</span>
+        <select id="gradient" aria-describedby="gradientHint">
+          <option value="keep" data-i18n="gradientKeep">Keep gradients</option>
+          <option value="first" data-i18n="gradientFirst">Flatten to the first stop</option>
+          <option value="middle" data-i18n="gradientMiddle">Flatten to the stop nearest the middle</option>
+          <option value="last" data-i18n="gradientLast">Flatten to the last stop</option>
+        </select>
+      </label>
+      <p id="gradientHint" class="hint" data-i18n="gradientHint">Replace each SVG gradient with a single color. If that color is a highlight, try another stop.</p>
+    </section>
     <section class="controls" aria-labelledby="encoding">
       <h3 id="encoding" data-i18n="export">Export</h3>
       <div class="row">

@@ -24,6 +24,14 @@ Open **http://127.0.0.1:4173**. The project has no package dependencies. Use **T
 
 If the source uses externally linked images, embed them in the SVG before importing. For transparent output, the input needs transparent regions. The **Keep transparency** setting preserves them.
 
+## Control the final colors
+
+In **Colors → Output palette**, choose **Limit color count** and enter a maximum from **1 to 64**. The result uses solid color steps without dither. The preview shows the colors it actually uses. Pick **Use as custom palette** to edit those colors, or enter your own hex values in **Custom palette**. Leave out pure white and near-white colors if you want neither in the result.
+
+For SVGs, **SVG gradients** can replace a whole linear or radial gradient with one of its stops. Try the first, middle, or last stop to keep the underlying color instead of a white highlight. The control works on vector gradients. For gradients baked into a PNG or JPEG, use a limited or custom palette to reduce the number of tones.
+
+A limited or custom palette uses PNG to preserve exact RGB values. If you keep transparency, each block is either clear or opaque. Fully transparent pixels do not count toward the limit.
+
 ## Sampling methods
 
 | Method | When to use it |
@@ -40,6 +48,7 @@ If the source uses externally linked images, embed them in the SVG before import
 | `index.html` and `src/styles.css` | Responsive editor and accessible controls |
 | `src/app.js` and `src/i18n.js` | Image loading, preview, export, and English/Chinese labels |
 | `src/pixel-engine.js`, `src/geometry.js`, and `src/worker.js` | Sampling, outlines, layout, and background conversion |
+| `src/palette.js` and `src/svg-gradients.js` | Output colors and SVG gradient flattening |
 | `assets/` | Original demonstration SVG and app icon |
 | `tests/` | Automated checks for grid placement, color, transparency, and outlines |
 

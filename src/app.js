@@ -1,4 +1,6 @@
-import { convert } from './pixel-engine.js';
+import { convertFrame } from './pixel-engine.js';
+import { colorHex, MAX_COLORS, parsePalette } from './palette.js';
+import { flattenSvgGradients } from './svg-gradients.js';
 import { imageRect, axisSegments } from './geometry.js';
 import { applyLanguage, t } from './i18n.js';
 
@@ -7,7 +9,8 @@ const defaults = {
   preset: '1920x1080', ratio: '16:9', width: 1920, height: 1080, fit: 'contain',
   step: 5, offsetX: 0, offsetY: 0, method: 'adaptive', outline: 'outer',
   ink: '#0b090e', inkWidth: 1, sensitivity: 46, format: 'png', quality: 94,
-  transparent: true, matte: '#ffffff'
+  transparent: true, matte: '#ffffff', paletteMode: 'source', paletteLimit: 16,
+  paletteText: '#100D18 #39315F #AF6D59 #EDB88F', gradient: 'keep'
 };
 const formatNames = { png: 'PNG', jpeg: 'JPEG', webp: 'WebP' };
 const hints = { adaptive: 'hintAdaptive', nearest: 'hintNearest', area: 'hintArea', lanczos: 'hintLanczos' };
@@ -25,6 +28,7 @@ function readSettings() {
       : typeof value === 'number' ? field.valueAsNumber : field.value;
     if (field.tagName === 'SELECT' && typeof value === 'number') config[key] = Number(field.value);
   }
+  if (config.paletteMode !== 'source') config.format = 'png';
   return config;
 }
 function applySettings(config) {
@@ -58,7 +62,7 @@ function colorBytes(hex) {
   return [1, 3, 5].map(i => Number.parseInt(hex.slice(i, i + 2), 16));
 }
 function showConfig(config) {
-  const { width, height, step, offsetX, offsetY, method, outline, format } = config;
+  const { width, height, step, offsetX, offsetY, method, outline, format, paletteMode } = config;
   const gw = Math.ceil((width + offsetX) / step), gh = Math.ceil((height + offsetY) / step);
   $('grid').textContent = Number.isFinite(gw * gh) ? t('grid', { cols: gw, rows: gh, step }) : '';
   $('stepRange').value = Number.isFinite(step) ? Math.min(32, step) : 5;
@@ -66,10 +70,31 @@ function showConfig(config) {
   $('sensitivityValue').value = config.sensitivity;
   $('contrastSettings').hidden = outline !== 'contrast';
   $('ink').disabled = $('inkWidth').disabled = outline === 'off';
+  $('paletteLimitSettings').hidden = paletteMode !== 'limit';
+  $('paletteTextSettings').hidden = paletteMode !== 'custom';
+  $('paletteHint').hidden = paletteMode === 'source';
+  $('paletteResult').hidden = true;
+  $('gradient').disabled = source?.type !== 'SVG';
+  $('format').value = format;
+  $('format').disabled = paletteMode !== 'source';
   $('qualitySettings').hidden = format === 'png';
   $('transparent').disabled = format === 'jpeg';
   $('matteSettings').hidden = format !== 'jpeg' && config.transparent;
   updateDownload();
+}
+function paletteFor(config, ink) {
+  const mode = config.paletteMode;
+  if (mode === 'source') return null;
+  const limit = config.paletteLimit;
+  const colors = mode === 'custom' ? parsePalette(config.paletteText) : null;
+  if (mode === 'limit' && (!Number.isInteger(limit) || limit < 1 || limit > MAX_COLORS)) {
+    throw new Error(t('paletteLimitError'));
+  }
+  if (mode === 'custom' && !colors) throw new Error(t('paletteTextError'));
+  return {
+    mode, limit, colors, transparent: config.transparent, matte: colorBytes(config.matte),
+    ink: config.outline === 'off' ? null : ink
+  };
 }
 function dimensionsFor(config) {
   if (!['width', 'height', 'step', 'offsetX', 'offsetY'].every(id => $(id).validity.valid)) {
@@ -83,7 +108,8 @@ function dimensionsFor(config) {
   const maxFit = Math.min(maxSamples, Math.floor(Math.sqrt(12_000_000 / budget)),
     Math.floor(8192 / Math.max(gw, gh)));
   const samples = Math.max(1, method === 'nearest' && maxFit % 2 === 0 ? maxFit - 1 : maxFit);
-  return { ...config, gw, gh, samples, ink: colorBytes(config.ink) };
+  const ink = colorBytes(config.ink);
+  return { ...config, gw, gh, samples, ink, palette: paletteFor(config, ink) };
 }
 function fixedRatio(value) {
   if (value === 'source') return source ? source.width / source.height : null;
@@ -139,7 +165,7 @@ function svgLength(value) {
   const length = Number(match[1]) * svgUnitScale[(match[2] || '').toLowerCase()];
   return Number.isFinite(length) && length > 0 ? length : null;
 }
-function getSvg(text) {
+function getSvg(text, gradient = 'keep') {
   const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
   const root = doc.documentElement;
   if (root.localName !== 'svg' || doc.querySelector('parsererror')) throw new Error(t('invalidSvg'));
@@ -164,6 +190,7 @@ function getSvg(text) {
       root.style.setProperty('height', height + 'px');
     }
   }
+  flattenSvgGradients(root, gradient);
   const markup = new XMLSerializer().serializeToString(root);
   const external = /\b(?:href|src)\s*=\s*["'](?!\s*(?:#|data:|["']))\s*[^"']|url\(\s*["']?\s*(?:https?:|\.\.?\/)|@import\b/i.test(markup);
   return { blob: new Blob([markup], { type: 'image/svg+xml' }), width, height, type: 'SVG', external };
@@ -186,16 +213,20 @@ async function openFile(file) {
   try {
     if (file.size > 100 * 1024 * 1024) throw new Error(t('fileLimit'));
     const isSvg = file.type === 'image/svg+xml' || /\.svg$/i.test(file.name);
-    const info = isSvg ? getSvg(await file.text()) : { blob: file, type: '' };
+    const svgText = isSvg ? await file.text() : null;
+    const info = isSvg ? getSvg(svgText) : { blob: file, type: '' };
     url = URL.createObjectURL(info.blob);
     const image = await loadImage(url);
     if (id !== sourceVersion) return;
     const width = info.width || image.naturalWidth;
     const height = info.height || image.naturalHeight;
     if (!width || !height) throw new Error(t('dimensionsMissing'));
-    if (source) URL.revokeObjectURL(source.url);
+    if (source) {
+      URL.revokeObjectURL(source.url);
+      if (source.variant) URL.revokeObjectURL(source.variant.url);
+    }
     const type = info.type || file.name.match(/\.([^.]*)$/)?.[1]?.toUpperCase() || t('image');
-    source = { image, width, height, type, external: info.external, name: file.name, url };
+    source = { image, width, height, type, external: info.external, name: file.name, url, svgText };
     url = null;
     $('filename').textContent = file.name;
     $('filename').title = file.name;
@@ -290,31 +321,75 @@ function queue() {
   setStatus(t('rendering'));
   timer = setTimeout(run, 85);
 }
-function run() {
+async function inputForConversion(input, gradient) {
+  if (!input.svgText || gradient === 'keep') return input;
+  if (input.variant?.gradient === gradient) return input.variant;
+  const { blob } = getSvg(input.svgText, gradient);
+  const url = URL.createObjectURL(blob);
+  try {
+    const image = await loadImage(url);
+    const variant = { image, gradient, url, width: input.width, height: input.height };
+    if (source === input) {
+      if (input.variant) URL.revokeObjectURL(input.variant.url);
+      input.variant = variant;
+    } else {
+      URL.revokeObjectURL(url);
+    }
+    return variant;
+  } catch (error) {
+    URL.revokeObjectURL(url);
+    throw error;
+  }
+}
+
+async function run() {
   if (!source || pending || processing) return;
   const id = version;
   try {
     const config = dimensionsFor(readSettings());
-    activeJob = { id, input: source, config };
+    const input = source;
+    activeJob = { id, input, config };
     processing = true;
-    const pixels = capture(source, config);
+    const raster = await inputForConversion(input, config.gradient);
+    if (id !== version || pending) {
+      receive({ id });
+      return;
+    }
+    const pixels = capture(raster, config);
     const job = { id, pixels, ...config };
     const background = getWorker();
     if (background) {
       background.postMessage(job, [pixels.buffer]);
     } else {
-      receive({ id, result: convert(job) });
+      receive({ id, ...convertFrame(job) });
     }
   } catch (error) {
     receive({ id, error: error.message || t('renderError') });
   }
 }
-function receive({ id, result: bytes, error }) {
+function showPalette(colors) {
+  if (!colors) return;
+  $('paletteResult').hidden = false;
+  $('paletteCount').textContent = t('paletteCount', { count: colors.length });
+  $('editPalette').hidden = !colors.length || $('paletteMode').value !== 'limit';
+  const swatches = colors.map(color => {
+    const swatch = document.createElement('li');
+    const hex = colorHex(color);
+    swatch.style.backgroundColor = hex;
+    swatch.title = hex;
+    swatch.setAttribute('aria-label', hex);
+    return swatch;
+  });
+  $('swatches').replaceChildren(...swatches);
+}
+
+function receive({ id, result: bytes, colors, error }) {
   const job = activeJob;
   activeJob = null;
   processing = false;
+  if (pending) return;
   if (id !== version) {
-    if (source && !pending) timer = setTimeout(run, 35);
+    if (source) timer = setTimeout(run, 35);
     return;
   }
   if (error || !job) { setStatus(error || t('previewError'), true); return; }
@@ -333,7 +408,8 @@ function receive({ id, result: bytes, error }) {
     const ctx = allocateCanvas(original, cw, ch);
     ctx.setTransform(cw / width, 0, 0, ch / height, 0, 0);
     drawImage(ctx, imageRect(config, input), input);
-    result = { id, input, config };
+    result = { id, input, config, colors };
+    showPalette(colors);
     $('stageInner').hidden = false;
     resizeFrame();
     const message = t('result', { w: width, h: height, cols: gw, rows: gh });
@@ -374,7 +450,7 @@ async function exportImage() {
   const canvas = document.createElement('canvas');
   try {
     const ctx = allocateCanvas(canvas, width, height);
-    if (format === 'jpeg' || !transparent) {
+    if (!geometry.palette && (format === 'jpeg' || !transparent)) {
       ctx.fillStyle = matte;
       ctx.fillRect(0, 0, width, height);
     }
@@ -417,6 +493,13 @@ async function openExample() {
 $('open').addEventListener('click', () => $('fileInput').click());
 $('example').addEventListener('click', openExample);
 $('demo').addEventListener('click', openExample);
+$('editPalette').addEventListener('click', () => {
+  if (!currentResult() || !result.colors?.length) return;
+  $('paletteText').value = result.colors.map(colorHex).join(' ');
+  $('paletteMode').value = 'custom';
+  queue();
+  $('paletteText').focus();
+});
 $('language').addEventListener('click', () => {
   const next = document.documentElement.lang === 'zh-CN' ? 'en' : 'zh';
   try { localStorage.setItem('spritecut-language', next); } catch {}
