@@ -1,0 +1,14 @@
+{
+  "name": "spritecut",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Convert vector illustrations to pixel art with adjustable grids and outlines.",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

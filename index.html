@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpriteCut · Vector to pixel art</title>
+<meta name="description" content="Turn SVG illustrations into crisp pixel art for games. Set your own canvas, pixel grid, and outlines.">
+<meta name="theme-color" content="#141419">
+<link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./src/styles.css">
+</head>
+<body>
+<svg aria-hidden="true" style="position:absolute;width:0;height:0" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-pixel" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h4v4h-4zm4 4h4v4h-4z"/></symbol>
+  <symbol id="i-open" viewBox="0 0 24 24"><path d="M4 7h5l2 3h9l-2 9H4zm0 0V5h6l2 2h7v3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M5 16v4h14v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zm8 0v5h4M8 17l3-4 2 2 2-2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  <symbol id="i-split" viewBox="0 0 24 24"><path d="m9 6-6 6 6 6m6-12 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+<header class="header">
+  <div class="brand"><div class="brandmark"><svg class="icon" aria-hidden="true"><use href="#i-pixel"/></svg></div><div><h1>SpriteCut</h1><p data-i18n="tagline">Pixel art converter</p></div></div>
+  <div class="actions">
+    <button type="button" id="language" aria-label="Switch language" data-i18n-label="language" title="Switch language">中文</button>
+    <input type="file" id="fileInput" accept="image/svg+xml,image/png,image/jpeg,image/webp,image/gif,image/bmp,image/avif,image/x-icon,image/heic,image/heif,.svg,.png,.jpg,.jpeg,.webp,.gif,.bmp,.avif,.ico,.heic,.heif,.tif,.tiff" hidden>
+    <button type="button" id="open"><svg class="icon" aria-hidden="true"><use href="#i-open"/></svg> <span data-i18n="open">Open image</span></button>
+    <button type="button" id="download" class="primary" disabled><svg class="icon" aria-hidden="true"><use href="#i-down"/></svg> <span id="downloadLabel" data-i18n="exportInitial">Export PNG</span></button>
+  </div>
+</header>
+<main class="layout">
+  <article class="workspace" aria-labelledby="preview-title">
+    <div class="toolbar">
+      <h2 id="preview-title" data-i18n="preview">Preview</h2>
+      <div class="stage-tools">
+        <button type="button" class="text-button" id="demo" data-i18n="example">Try example</button>
+        <div class="segment" role="group" aria-label="Preview mode" data-i18n-label="viewMode">
+          <button type="button" data-view="original" aria-pressed="false" data-i18n="original">Original</button>
+          <button type="button" data-view="compare" aria-pressed="false" data-i18n="compare">Compare</button>
+          <button type="button" data-view="result" aria-pressed="true" data-i18n="pixelResult">Pixel art</button>
+        </div>
+        <select id="zoom" aria-label="Preview zoom" data-i18n-label="zoom"><option value="fit" data-i18n="fitView">Fit</option><option value=".25">25%</option><option value=".5">50%</option><option value="1">100%</option><option value="2">200%</option><option value="4">400%</option></select>
+      </div>
+    </div>
+    <div class="stage" id="stage" data-drop-text="Drop to open image">
+      <div class="stage-inner" id="stageInner" hidden>
+        <div class="frame" id="frame" data-mode="result">
+          <canvas id="sourceCanvas" role="img" aria-label="Original" data-i18n-label="original"></canvas>
+          <div class="pixel-layer"><canvas id="pixelCanvas" role="img" aria-label="Pixel art" data-i18n-label="pixelResult"></canvas></div>
+          <div class="comparison-line" aria-hidden="true"><span><svg class="icon"><use href="#i-split"/></svg></span></div>
+          <input id="split" type="range" min="0" max="100" value="50" aria-label="Compare slider, original on the left and pixel art on the right" data-i18n-label="split">
+        </div>
+      </div>
+      <div class="empty" id="empty"><span data-i18n="drop">Drop an SVG or another image here</span><button type="button" id="example" data-i18n="example">Try example</button></div>
+    </div>
+    <div class="footer">
+      <div class="file"><svg class="icon" aria-hidden="true"><use href="#i-file"/></svg><span id="filename" data-i18n="waiting">No image selected</span><span class="meta" id="sourceSize">SVG / PNG / JPG / WebP</span></div>
+      <div id="status" role="status" aria-live="polite" data-i18n="canDrop">Drag an image to get started</div>
+    </div>
+  </article>
+  <form class="settings" id="settings" aria-label="Settings" data-i18n-label="settings">
+    <div class="settings-head"><h2 data-i18n="settings">Settings</h2><button type="button" class="text-button" id="reset" data-i18n="reset">Reset to 1080p preset</button></div>
+    <section class="controls" aria-labelledby="composition">
+      <h3 id="composition" data-i18n="canvas">Canvas</h3>
+      <div class="row">
+        <label class="field"><span data-i18n="size">Size preset</span><select id="preset"><option value="1920x1080">1080p · 1920×1080</option><option value="1280x720">720p · 1280×720</option><option value="2560x1440">1440p · 2560×1440</option><option value="3840x2160">4K · 3840×2160</option><option value="1080x1920" data-i18n="portrait">Portrait · 1080×1920</option><option value="1080x1080" data-i18n="square">Square · 1080×1080</option><option value="source" data-i18n="originalSize">Original size</option><option value="custom" data-i18n="custom">Custom</option></select></label>
+        <label class="field"><span data-i18n="aspect">Aspect ratio</span><select id="ratio"><option value="16:9">16:9</option><option value="9:16">9:16</option><option value="1:1">1:1</option><option value="4:3">4:3</option><option value="3:2">3:2</option><option value="21:9">21:9</option><option value="source" data-i18n="originalAspect">Original ratio</option><option value="free" data-i18n="free">Unlocked</option></select></label>
+      </div>
+      <div class="row"><label class="field"><span data-i18n="width">Width (px)</span><input id="width" type="number" min="1" max="8192" step="1" required inputmode="numeric"></label><label class="field"><span data-i18n="height">Height (px)</span><input id="height" type="number" min="1" max="8192" step="1" required inputmode="numeric"></label></div>
+      <label class="field"><span data-i18n="layout">Image placement</span><select id="fit"><option value="contain" data-i18n="contain">Fit entire image</option><option value="cover" data-i18n="cover">Fill and crop</option><option value="stretch" data-i18n="stretch">Stretch</option></select></label>
+    </section>
+    <section class="controls" aria-labelledby="sampling">
+      <h3 id="sampling" data-i18n="pixelation">Pixelation</h3>
+      <div class="field">
+        <label class="slider-label" for="step"><span data-i18n="cellSize">Pixel size</span> <input id="step" type="number" min="1" max="128" step="1" required inputmode="numeric" aria-label="Pixel size in pixels" data-i18n-label="cellSizeA11y"></label>
+        <input class="range" id="stepRange" type="range" min="1" max="32" value="5" aria-label="Pixel size" data-i18n-label="cellSize">
+        <p id="grid" class="hint"></p>
+      </div>
+      <label class="field"><span data-i18n="algorithm">Sampling method</span><select id="method"><option value="adaptive" data-i18n="adaptive">Adaptive · Color and ink</option><option value="nearest" data-i18n="nearest">Nearest neighbor</option><option value="area" data-i18n="area">Area average</option><option value="lanczos" data-i18n="lanczos">Lanczos 3</option></select></label>
+      <p class="hint" id="methodHint"></p>
+      <details>
+        <summary data-i18n="alignment">Pixel grid alignment</summary>
+        <div class="advanced row">
+          <label class="field"><span data-i18n="offsetX">Horizontal offset (px)</span><input id="offsetX" type="number" min="0" max="4" value="0" step="1" required inputmode="numeric"></label>
+          <label class="field"><span data-i18n="offsetY">Vertical offset (px)</span><input id="offsetY" type="number" min="0" max="4" value="0" step="1" required inputmode="numeric"></label>
+        </div>
+        <p class="hint" data-i18n="alignmentHint">Partial blocks are clipped at the canvas edge to keep the exact export size.</p>
+      </details>
+    </section>
+    <section class="controls" aria-labelledby="inking">
+      <h3 id="inking" data-i18n="inking">Outlines</h3>
+      <label class="field"><span data-i18n="outlineRegion">Add outlines</span><select id="outline"><option value="outer" data-i18n="outer">Silhouette · Auto-detect background</option><option value="contrast" data-i18n="contrast">Silhouette and high-contrast edges</option><option value="alpha" data-i18n="alpha">Transparency edges only</option><option value="off" data-i18n="off">Off</option></select></label>
+      <div class="row">
+        <label class="field"><span data-i18n="inkColor">Outline color</span><input id="ink" type="color" value="#100d18"></label>
+        <label class="field"><span data-i18n="inkWidth">Line width</span><select id="inkWidth"><option value="1" data-i18n="oneCell">1 block</option><option value="2" data-i18n="twoCells">2 blocks</option><option value="3" data-i18n="threeCells">3 blocks</option><option value="4" data-i18n="fourCells">4 blocks</option></select></label>
+      </div>
+      <div class="field" id="contrastSettings"><label for="sensitivity" class="slider-label"><span data-i18n="sensitivity">Edge sensitivity</span> <output id="sensitivityValue" for="sensitivity"></output></label><input class="range" id="sensitivity" type="range" min="0" max="100" value="46"></div>
+    </section>
+    <section class="controls" aria-labelledby="encoding">
+      <h3 id="encoding" data-i18n="export">Export</h3>
+      <div class="row">
+        <label class="field"><span data-i18n="format">File format</span><select id="format"><option value="png">PNG</option><option value="jpeg">JPEG</option><option value="webp">WebP</option></select></label>
+        <label class="field" id="qualitySettings"><span data-i18n="quality">Quality (%)</span><input id="quality" type="number" min="1" max="100" step="1" value="94" required inputmode="numeric"></label>
+      </div>
+      <label class="switch"><span data-i18n="transparent">Keep transparency</span><input id="transparent" type="checkbox" checked></label>
+      <label class="field" id="matteSettings"><span data-i18n="matte">Background color</span><input id="matte" type="color" value="#ffffff"></label>
+    </section>
+  </form>
+</main>
+<noscript><p class="noscript">Enable JavaScript to use SpriteCut. / 请启用 JavaScript。</p></noscript>
+<script type="module" src="./src/app.js"></script>
+</body>
+</html>
