@@ -3,6 +3,7 @@ import { colorHex, MAX_COLORS, parsePalette } from './palette.js';
 import { flattenSvgGradients } from './svg-gradients.js';
 import { imageRect, axisSegments } from './geometry.js';
 import { applyLanguage, t } from './i18n.js';
+import { createEngineWorker, loadDemoImage } from './platform.js';
 
 const $ = id => document.getElementById(id);
 const defaults = {
@@ -279,7 +280,7 @@ function capture(input, config) {
 }
 function getWorker() {
   if (worker || workerUnavailable) return worker;
-  try { worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' }); }
+  try { worker = createEngineWorker(); }
   catch { workerUnavailable = true; }
   if (!worker) return null;
   worker.onmessage = ({ data }) => receive(data);
@@ -480,9 +481,7 @@ async function exportImage() {
 async function openExample() {
   const id = sourceVersion;
   try {
-    const response = await fetch(new URL('../assets/desert-observatory.svg', import.meta.url));
-    if (!response.ok) throw new Error(t('exampleError'));
-    const sample = await response.blob();
+    const sample = await loadDemoImage();
     if (id === sourceVersion) {
       await openFile(new File([sample], 'desert-observatory.svg', { type: 'image/svg+xml' }));
     }

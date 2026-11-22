@@ -1,0 +1,37 @@
+name: Publish SpriteCut release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: npm run build:offline
+      - name: Package and verify the offline app
+        run: |
+          version="v$(node -p 'require("./package.json").version')"
+          test "$version" = "$GITHUB_REF_NAME"
+          test -f "docs/releases/$version.md"
+          (cd dist && zip -q -r SpriteCut.zip SpriteCut/)
+          unzip -t dist/SpriteCut.zip
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="$GITHUB_REF_NAME"
+          gh release create "$tag" dist/SpriteCut.zip \
+            --verify-tag --title "SpriteCut $tag" --notes-file "docs/releases/$tag.md" --latest

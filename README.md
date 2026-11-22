@@ -1,6 +1,6 @@
 # SpriteCut
 
-[简体中文](docs/README.zh-CN.md)
+[Download SpriteCut ZIP](https://github.com/XuanLIN0224/SpriteCut/releases/latest/download/SpriteCut.zip) · [简体中文](docs/README.zh-CN.md)
 
 ![SpriteCut cover showing a desert observatory as a vector illustration and as pixel art](docs/cover.png)
 
@@ -8,7 +8,11 @@ SpriteCut turns vector illustrations into pixel art for game cutscenes, backgrou
 
 The default preset takes a 4K SVG down to **1920 × 1080**, using **5 × 5 px** blocks. That gives you a **384 × 216** pixel grid inside a 1080p image. The adaptive sampler keeps flat fills and looks for thin, dark lines that might disappear with a single center sample.
 
-## Try it locally
+## Download and run
+
+Download [SpriteCut.zip](https://github.com/XuanLIN0224/SpriteCut/releases/latest/download/SpriteCut.zip), extract it, and open **SpriteCut.html** in a modern browser. The packaged editor runs offline. Find previous versions on the [Releases page](https://github.com/XuanLIN0224/SpriteCut/releases).
+
+## Run from source
 
 With [Node.js](https://nodejs.org/) 20 or later installed, run this from the project folder.
 
@@ -16,7 +20,7 @@ With [Node.js](https://nodejs.org/) 20 or later installed, run this from the pro
 npm start
 ```
 
-Open **http://127.0.0.1:4173**. The project has no package dependencies. Use **Try example** to load the desert observatory, or drop in your own SVG, PNG, JPEG, or WebP. Image processing runs in your browser and your files stay on your device.
+Open **http://127.0.0.1:4173**. The editor runs without installing packages. Use **Try example** to load the desert observatory, or drop in your own SVG, PNG, JPEG, or WebP. Image processing runs in your browser and your files stay on your device.
 
 1. Pick a size preset or set an exact width and height. Choose **Fit entire image**, **Fill and crop**, or **Stretch**.
 2. Set the pixel size and use **Compare** to check the edges. Use **Silhouette** for outer lines or **Off** to keep only lines already in the original.
@@ -52,6 +56,8 @@ A limited or custom palette uses PNG to preserve exact RGB values. If you keep t
 | `assets/` | Original demonstration SVG and app icon |
 | `tests/` | Automated checks for grid placement, color, transparency, and outlines |
 
-Run the checks with `npm test`.
+Run the checks with `npm test`. To build the offline edition, run `npm ci --ignore-scripts` and `npm run build:offline`. The build writes `dist/SpriteCut/`.
+
+To publish a new version, update the version in `package.json` and `package-lock.json`, add notes to `docs/releases/vX.Y.Z.md`, commit, and push the matching `vX.Y.Z` tag. GitHub Actions tests, packages, and attaches the ZIP to a GitHub Release.
 
 Created by [XuanLIN0224](https://github.com/XuanLIN0224).

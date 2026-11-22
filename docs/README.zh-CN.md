@@ -1,6 +1,6 @@
 # SpriteCut 像素画转换器
 
-[English](../README.md)
+[下载 SpriteCut ZIP](https://github.com/XuanLIN0224/SpriteCut/releases/latest/download/SpriteCut.zip) · [English](../README.md)
 
 ![同一张沙漠天文台插画的 SVG 原图和像素化效果](cover.png)
 
@@ -10,7 +10,9 @@ SpriteCut 可以把矢量插画转成适合游戏过场、背景和精灵图使�
 
 ## 怎么用
 
-安装 Node.js 20 或更新版，在项目目录运行 `npm start`，然后打开 **http://127.0.0.1:4173**。点 **打开示例** 体验沙漠天文台，也可以直接拖入 SVG、PNG、JPEG 或 WebP。图片和转换过程都留在你的设备上。
+下载 [SpriteCut.zip](https://github.com/XuanLIN0224/SpriteCut/releases/latest/download/SpriteCut.zip)，解压后双击 **SpriteCut.html** 即可离线使用。点 **打开示例** 体验沙漠天文台，也可以直接拖入 SVG、PNG、JPEG 或 WebP。图片和转换过程都留在你的设备上。
+
+从源码运行需要 Node.js 20 或更新版。在项目目录运行 `npm start`，打开 **http://127.0.0.1:4173**。
 
 1. **画幅**可以选 1080p、4K、竖屏、方形或自定义尺寸，支持留边、裁剪和拉伸。
 2. **像素化**可以调整每格的大小、对齐位置和取样算法。切到 **对照**，拉动分界线查看原图和结果。
