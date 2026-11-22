@@ -1,4 +1,5 @@
 import { applyPalette } from './palette.js';
+import { flattenSmoothRegions } from './flat-colors.js';
 
 const clamp = (x, min, max) => Math.min(max, Math.max(min, x));
 const luma = (r, g, b) => (54 * r + 183 * g + 19 * b) / 256;
@@ -272,6 +273,7 @@ export function convert({ pixels, gw, gh, samples, method, ...settings }) {
   const result = new Uint8ClampedArray(gw * gh * 4);
   if (method === 'lanczos' && samples > 1) resizeLanczos(pixels, result, gw, gh, samples);
   else resizeCells(pixels, result, gw, gh, samples, method);
+  if (settings.noGradients) flattenSmoothRegions(result, gw, gh);
   addOutlines(result, gw, gh, settings);
   return result;
 }

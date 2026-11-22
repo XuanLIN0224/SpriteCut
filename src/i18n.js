@@ -1,5 +1,8 @@
 const chinese = {
   "colorsTitle": "颜色",
+  "noGradients": "无渐变 · 输出纯色块",
+  "flatColorHint": "压平 SVG 渐变，也会尝试把 PNG、JPG 等图片中的平滑过渡合并为纯色块。",
+  "flatColorExport": "无渐变模式使用 PNG 导出，保留清晰的色块边界。",
   "paletteMode": "输出调色板",
   "paletteSource": "保留取样颜色",
   "paletteLimitMode": "限制颜色数量",

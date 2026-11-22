@@ -30,6 +30,8 @@ If the source uses externally linked images, embed them in the SVG before import
 
 ## Control the final colors
 
+Turn on **Colors → No gradients** to fill each native SVG gradient with one paint color and simplify smooth shading into solid blocks. The automatic SVG choice favors a visible non-white stop when it can identify one. You can still pick the first, middle, or last stop yourself. With PNG and JPEG, colors are already part of the image, so the app finds continuous transitions from neighboring pixels. Very complex shading can leave separate blocks. This mode exports PNG to keep clean boundaries.
+
 In **Colors → Output palette**, choose **Limit color count** and enter a maximum from **1 to 64**. The result uses solid color steps without dither. The preview shows the colors it actually uses. Pick **Use as custom palette** to edit those colors, or enter your own hex values in **Custom palette**. Leave out pure white and near-white colors if you want neither in the result.
 
 For SVGs, **SVG gradients** can replace a whole linear or radial gradient with one of its stops. Try the first, middle, or last stop to keep the underlying color instead of a white highlight. The control works on vector gradients. For gradients baked into a PNG or JPEG, use a limited or custom palette to reduce the number of tones.

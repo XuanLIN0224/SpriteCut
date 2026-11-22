@@ -63,7 +63,7 @@ ENGLISH
 
 The app works offline. Your images are processed on your device.
 The default is 1920 × 1080 with 5 × 5 px blocks.
-Use Colors to limit the palette or flatten gradients in vector artwork.
+Use Colors → No gradients for solid fills, or set a maximum number of colors.
 
 简体中文
 1. 解压 SpriteCut.zip。
@@ -71,7 +71,7 @@ Use Colors to limit the palette or flatten gradients in vector artwork.
 3. 打开 SVG 或其他图片，调整设置后点击「导出 PNG」。
 
 工具可离线运行，图片在本机处理。默认导出 1920 × 1080，
-每格 5 × 5 像素。「颜色」面板可以限制颜色数量或压平 SVG 渐变。
+每格 5 × 5 像素。在「颜色」面板开启「无渐变」或设置颜色上限。
 
 https://github.com/XuanLIN0224/SpriteCut/releases/latest
 `)

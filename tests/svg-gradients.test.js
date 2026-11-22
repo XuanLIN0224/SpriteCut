@@ -14,7 +14,7 @@ function fixture() {
       namespaceURI: ns,
       localName: 'stop',
       offset, color,
-      getAttribute(name) { return this[name]; },
+      getAttribute(name) { return name === 'stop-color' ? color : this[name]; },
       setAttribute(name, value) { this[name] = value; },
       remove() { gradient.children = gradient.children.filter(stop => stop !== this); }
     }));
@@ -45,4 +45,11 @@ test('flattening keeps a chosen original stop, and preserves gradient references
     equal(root.gradients.radialGradient[1].href, '#linear');
     equal(root.gradients.radialGradient[1].children.length, 0);
   }
+});
+
+test('automatic SVG flattening prefers an opaque non-white paint stop', () => {
+  const root = fixture();
+  flattenSvgGradients(root, 'auto');
+  deepEqual(root.gradients.linearGradient[0].children.map(stop => stop.color), ['#122646']);
+  deepEqual(root.gradients.radialGradient[0].children.map(stop => stop.color), ['#C78B57']);
 });

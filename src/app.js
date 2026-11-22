@@ -11,7 +11,7 @@ const defaults = {
   step: 5, offsetX: 0, offsetY: 0, method: 'adaptive', outline: 'outer',
   ink: '#0b090e', inkWidth: 1, sensitivity: 46, format: 'png', quality: 94,
   transparent: true, matte: '#ffffff', paletteMode: 'source', paletteLimit: 16,
-  paletteText: '#100D18 #39315F #AF6D59 #EDB88F', gradient: 'keep'
+  paletteText: '#100D18 #39315F #AF6D59 #EDB88F', gradient: 'keep', noGradients: false
 };
 const formatNames = { png: 'PNG', jpeg: 'JPEG', webp: 'WebP' };
 const hints = { adaptive: 'hintAdaptive', nearest: 'hintNearest', area: 'hintArea', lanczos: 'hintLanczos' };
@@ -29,7 +29,7 @@ function readSettings() {
       : typeof value === 'number' ? field.valueAsNumber : field.value;
     if (field.tagName === 'SELECT' && typeof value === 'number') config[key] = Number(field.value);
   }
-  if (config.paletteMode !== 'source') config.format = 'png';
+  if (config.paletteMode !== 'source' || config.noGradients) config.format = 'png';
   return config;
 }
 function applySettings(config) {
@@ -76,8 +76,9 @@ function showConfig(config) {
   $('paletteHint').hidden = paletteMode === 'source';
   $('paletteResult').hidden = true;
   $('gradient').disabled = source?.type !== 'SVG';
+  $('flatColorExport').hidden = !config.noGradients;
   $('format').value = format;
-  $('format').disabled = paletteMode !== 'source';
+  $('format').disabled = paletteMode !== 'source' || config.noGradients;
   $('qualitySettings').hidden = format === 'png';
   $('transparent').disabled = format === 'jpeg';
   $('matteSettings').hidden = format !== 'jpeg' && config.transparent;
@@ -351,7 +352,8 @@ async function run() {
     const input = source;
     activeJob = { id, input, config };
     processing = true;
-    const raster = await inputForConversion(input, config.gradient);
+    const gradient = config.noGradients && config.gradient === 'keep' ? 'auto' : config.gradient;
+    const raster = await inputForConversion(input, gradient);
     if (id !== version || pending) {
       receive({ id });
       return;
